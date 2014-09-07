@@ -16,7 +16,8 @@ class simple_agent extends uvm_agent;
       driver = simple_driver::type_id::create("driver",this);
     end
   endfunction : build_phase
- 
+
+  //Use connect phase to connect components together
   virtual function void connect_phase(uvm_phase phase);
     if(is_active == UVM_ACTIVE) begin
       driver.seq_item_port.connect(sequencer.seq_item_export);
