@@ -3,5 +3,8 @@ UVMReference
 
 Reference examples and short projects using UVM Methodology
 
+1) course_examples  directory has  example code  for basic uvm components and sequences that are referred in the course lectures
+This can be referred which also has decent enough comments to understand structure
 
-This is a placeholder repository as of now. Stay tuned !
+2) apb_project
+    This containts a working copy for an APB interface protocol verification environment in UVM. Refer to this  for the APB project assignment as part of the course
