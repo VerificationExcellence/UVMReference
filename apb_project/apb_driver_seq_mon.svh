@@ -30,7 +30,7 @@ class apb_master_drv extends uvm_driver#(apb_rw);
          vif = agent.vif;
      end
      else begin
-         if (!uvm_config_db#(virtual apb_if)::get(this, "", "apb_if", vif)) begin
+         if (!uvm_config_db#(virtual apb_if)::get(this, "", "vif", vif)) begin
             `uvm_fatal("APB/DRV/NOVIF", "No virtual interface specified for this driver instance")
          end
      end
