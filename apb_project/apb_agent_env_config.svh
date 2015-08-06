@@ -82,11 +82,11 @@ class apb_env  extends uvm_env;
 
    //Build phase - Construct agent and get virtual interface handle from test  and pass it down to agent
    function void build_phase(uvm_phase phase);
-     agt = apb_agent::type_id::create("apb_agt", this);
+     agt = apb_agent::type_id::create("agt", this);
      if (!uvm_config_db#(virtual apb_if)::get(this, "", "vif", vif)) begin
          `uvm_fatal("APB/AGT/NOVIF", "No virtual interface specified for this env instance")
      end
-     uvm_config_db#(virtual apb_if)::set( this, "apb_agt", "vif", vif);
+     uvm_config_db#(virtual apb_if)::set( this, "agt", "vif", vif);
    endfunction: build_phase
   
 endclass : apb_env  
