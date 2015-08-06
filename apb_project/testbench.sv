@@ -5,6 +5,7 @@
 //-------------------------------------------
 
  import uvm_pkg::*;
+`include "uvm_macros.svh"
 
  //Include all files
 `include "apb_if.svh"
