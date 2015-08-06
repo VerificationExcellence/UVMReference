@@ -20,13 +20,13 @@ class apb_base_test extends uvm_test;
   //Build phase - Construct the cfg and env class using factory
   //Get the virtual interface handle from Test and then set it config db for the env component
   function void build_phase(uvm_phase phase);
-    cfg = apb_config::type_id::create("apb_cfg", this);
-    env = apb_env::type_id::create("apb_env", this);
+    cfg = apb_config::type_id::create("cfg", this);
+    env = apb_env::type_id::create("env", this);
     //
     if (!uvm_config_db#(virtual apb_if)::get(this, "", "vif", vif)) begin
        `uvm_fatal("APB/DRV/NOVIF", "No virtual interface specified for this test instance")
     end 
-    uvm_config_db#(virtual apb_if)::set( this, "apb_env", "vif", vif);
+    uvm_config_db#(virtual apb_if)::set( this, "env", "vif", vif);
   endfunction
 
   //Run phase - Create an abp_sequence and start it on the apb_sequencer
