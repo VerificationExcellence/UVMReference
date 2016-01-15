@@ -2,7 +2,7 @@ class simple_agent extends uvm_agent;
 
   uvm_active_passive_enum is_active;
   // Constructor and UVM automation macros
-  uvm_sequencer #(simple_item) sequencer;
+  simple_sequencer sequencer;
   simple_driver driver;
   simple_monitor monitor;
  
@@ -12,7 +12,7 @@ class simple_agent extends uvm_agent;
     monitor = simple_monitor::type_id::create("monitor",this);
     if (is_active == UVM_ACTIVE) begin
       // Build the sequencer and driver.
-      sequencer = uvm_sequencer#(simple_item)::type_id::create("sequencer",this);
+      sequencer = simple_sequencer::type_id::create("sequencer",this);
       driver = simple_driver::type_id::create("driver",this);
     end
   endfunction : build_phase
