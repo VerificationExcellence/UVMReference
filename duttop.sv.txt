@@ -1,0 +1,82 @@
+module duttop (
+input 	logic 		clk,
+input 	logic 		rst,
+input 	logic [7:0] in1,in2,in3,in4,
+input 	logic 		in1v,in2v,in3v,in4v,
+output 	logic [7:0]	out1,out2,out3,out4,
+output 	logic 		out1v,out2v,out3v,out4v,
+input 	logic [7:0] din,
+output  logic [7:0] dout,
+input 	logic [7:0] addr,
+input 	logic		wr,
+input   logic       rd,
+output logic  		i1wy1,i1wy2,i1wy3,i1wy4,
+output logic 		i2wy1,i2wy2,i2wy3,i2wy4,
+output logic 		i3wy1,i3wy2,i3wy3,i3wy4,
+output logic 		i4wy1,i4wy2,i4wy3,i4wy4
+);
+
+logic [7:0]	 	in1_del2,in2_del2,in3_del2,in4_del2;
+logic 			busy1,busy2,busy3,busy4;
+logic 			discy1,discy2,discy3,discy4;
+logic [ 7:0] 	sa_port_csr; 
+logic [ 7:0] 	da_port_csr; 
+logic [31:0] 	dropped_pkt_count_csr; 
+logic [31:0] 	crc_dropped_csr; 
+logic drop;
+always @(posedge clk or posedge rst)
+begin
+	if (rst) sa_port_csr <= 0; //[7:4]=FutureUse_
+								//[3:0]=SA4,SA3,SA2,SA1
+	else if (wr && addr==8'h20) sa_port_csr<=din;
+end
+always @(posedge clk or posedge rst)
+begin
+	if (rst) da_port_csr <= 0; //FutureUSE_4321
+	else if (wr && addr==8'h22) da_port_csr<=din;
+end
+always @(posedge clk or posedge rst)
+begin
+	if (rst) dropped_pkt_count_csr <= 0;//
+	else
+		begin
+			if (wr && addr==8'h40) dropped_pkt_count_csr<=din;
+			else if (drop) dropped_pkt_count_csr<=dropped_pkt_count_csr+1;
+		end
+end
+always @(posedge clk or posedge rst)
+begin
+	if (rst) crc_dropped_csr <= 0;//
+	else
+		begin
+			//pending
+		end
+end
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) dout<=0;
+	else
+	if (rd)
+	case(addr)
+	'h20 : dout <= sa_port_csr;
+	'h22 : dout <= da_port_csr;
+	'h40 : dout <= dropped_pkt_count_csr;
+	'h44 : dout <= crc_dropped_csr;
+	endcase
+end
+ichtop ICHTOP (.*,
+		.discy1_d2(discy1),
+		.discy2_d2(discy2),
+		.discy3_d2(discy3),
+		.discy4_d2(discy4)
+		);
+	
+ochtop OCHTOP(.*,
+		.in1(in1_del2),
+		.in2(in2_del2),
+		.in3(in3_del2),
+		.in4(in4_del2)	
+);
+endmodule
+	

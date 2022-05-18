@@ -1,0 +1,74 @@
+class scoreboard #(type T=packet) extends uvm_scoreboard;
+typedef scoreboard#(T) scb_type;
+`uvm_component_param_utils(scb_type)
+
+//The $typename system function returns a string 
+//that represents the resolved type of its argument
+const static string type_name = $sformatf("scoreboard#(%0s)",$typename(T));
+virtual function string get_type_name();
+return type_name;
+endfunction
+
+`uvm_analysis_imp_decl(_inp)
+`uvm_analysis_imp_decl(_outp)
+
+uvm_analysis_imp_inp #(T,scb_type) mon_in;
+uvm_analysis_imp_outp #(T,scb_type) mon_out;
+
+T q_in [$];
+bit [31:0] m_matches,mis_matches;
+
+function new(string name="scoreboard",uvm_component parent=null);
+    super.new(name,parent);
+`uvm_info(get_type_name(),"NEW scoreboard",UVM_NONE);
+endfunction
+
+virtual function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+mon_in=new("mon_in",this);
+mon_out=new("mon_out",this);
+endfunction
+
+virtual function void write_inp(T pkt);
+T pkt_in;
+$cast(pkt_in,pkt.clone());
+q_in.push_back(pkt_in);
+endfunction
+
+virtual function void write_outp(T pkt);
+T ref_pkt;
+int get_index[$];
+int index;
+bit done;
+get_index = q_in.find_index() with (item.sa==pkt.sa && item.da==pkt.da);
+foreach (get_index[i]) begin
+    index=get_index[i];
+    ref_pkt=q_in[index];
+       if(ref_pkt.compare(pkt)) begin
+            m_matches++;
+            q_in.delete(index);
+            `uvm_info("SCB_MATCH","Packet matched ",UVM_NONE);
+	    done=1;
+	    break;
+       end else done=0;
+ end
+  if (!done) begin
+            mis_matches++;
+           `uvm_error("SCB_NO_MATCH","Error ***** No Matching packet found *******");
+           `uvm_info("SCB",$sformatf("Expected::%0p ",ref_pkt.tot_pkt),UVM_NONE);
+           `uvm_info("SCB",$sformatf("Received::%0p ",pkt.tot_pkt),UVM_NONE);
+	   done=0;
+ end
+endfunction
+
+virtual function void extract_phase(uvm_phase phase);
+uvm_config_db#(int)::set(null,"uvm_test_top.env","matches",m_matches);
+uvm_config_db#(int)::set(null,"uvm_test_top.env","mis_matches",mis_matches);
+endfunction
+
+function void report_phase(uvm_phase phase);
+`uvm_info("SCB",$sformatf("Scoreboard completed with matches=%0d mismatches=%0d ",m_matches,mis_matches),UVM_NONE);
+endfunction 
+    
+endclass
+

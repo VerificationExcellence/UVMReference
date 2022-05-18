@@ -1,0 +1,31 @@
+package router_env_pkg;
+
+typedef enum {NORMAL,RESET,REG_WRITE,REG_READ} op_type;
+
+// UVM class library compiled in a package
+import uvm_pkg::*;
+
+
+`include "packet.sv"
+`include "reset_sequence.sv"
+`include "config_sequence.sv"
+`include "sa3_da4_sequence.sv"
+`include "sequencer.sv"
+`include "driver.sv"
+`include "iMonitor.sv"
+`include "master_agent.sv"
+
+`include "oMonitor.sv"
+`include "slave_agent.sv"
+
+`include "coverage.sv"
+`include "scoreboard.sv"
+`include "environment.sv"
+
+`include "sa1_da1_sequence.sv"
+`include "sa1_da2_sequence.sv"
+`include "sa1_da3_sequence.sv"
+`include "sa1_da4_sequence.sv"
+`include "random_sequence.sv"
+
+endpackage 

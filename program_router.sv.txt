@@ -1,0 +1,20 @@
+`include "router_env_pkg.pkg"
+program program_router (router_if pif);
+
+import uvm_pkg::*;
+import router_env_pkg::*;
+
+`include "test.sv"
+`include "rand_test.sv"
+`include "test_sa1_da1.sv"
+`include "test_sa1_da2.sv"
+`include "test_sa1_da3.sv"
+`include "test_sa1_da4.sv"
+
+initial begin
+  $timeformat(-9, 1, "ns", 10);
+  uvm_config_db#(virtual router_if)::set(null,"uvm_test_top","vif",pif);
+  run_test();
+end
+
+endprogram

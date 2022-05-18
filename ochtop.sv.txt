@@ -1,0 +1,60 @@
+module ochtop (
+input  logic clk,
+input  logic rst,
+output logic busy1,busy2,busy3,busy4,
+input  logic i1wy1,i1wy2,i1wy3,i1wy4,
+input  logic i2wy1,i2wy2,i2wy3,i2wy4,
+input  logic i3wy1,i3wy2,i3wy3,i3wy4,
+input  logic i4wy1,i4wy2,i4wy3,i4wy4,
+input  logic [7:0] in1,in2,in3,in4,
+output logic [7:0] out1,out2,out3,out4,
+input  logic discy1,discy2,discy3,discy4,
+output logic out1v,out2v,out3v,out4v
+);
+
+OCH OCH1(.*,
+		.r1(i1wy1),
+		.r2(i2wy1),
+		.r3(i3wy1),
+		.r4(i4wy1),
+		.out(out1),
+		.disc(discy1),
+		.chaNo(4'b1000),
+		.busy(busy1),
+		.outv(out1v)
+		); //name
+OCH OCH2(.*,
+		.r1(i1wy2),
+		.r2(i2wy2),
+		.r3(i3wy2),
+		.r4(i4wy2),
+		.out(out2),
+		.disc(discy2),
+		.chaNo(4'b0100),
+		.busy(busy2),
+		.outv(out2v)
+		); //name
+OCH OCH3(.*,
+		.r1(i1wy3),
+		.r2(i2wy3),
+		.r3(i3wy3),
+		.r4(i4wy3),
+		.out(out3),
+		.disc(discy3),
+		.chaNo(4'b0010),
+		.busy(busy3),
+		.outv(out3v)
+		); //name
+		
+OCH OCH4(.*,
+		.r1(i1wy4),
+		.r2(i2wy4),
+		.r3(i3wy4),
+		.r4(i4wy4),
+		.out(out4),
+		.disc(discy4),
+		.chaNo(4'b0001),
+		.busy(busy4),
+		.outv(out4v)
+		); //name
+endmodule

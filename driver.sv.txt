@@ -1,0 +1,99 @@
+class driver extends uvm_driver#(packet);
+`uvm_component_utils(driver)
+bit [31:0] pkt_id;
+virtual router_if.tb vif;
+
+function new (string name="driver",uvm_component parent);
+	super.new(name,parent);
+endfunction
+
+extern virtual task run_phase(uvm_phase phase);
+extern virtual function void build_phase(uvm_phase phase);
+extern virtual task drive(ref packet pkt);
+extern virtual task drive_pkt(input packet pkt);
+extern virtual task drive_reset(input packet pkt);
+extern virtual task drive_reg_write(input packet pkt);
+extern virtual task drive_reg_read(ref packet pkt);
+endclass
+
+task driver::run_phase(uvm_phase phase);
+forever begin
+	seq_item_port.get_next_item(req);
+	pkt_id++;
+	`uvm_info("get_pkt",$sformatf("Driver Received %0s Transaction %0d from TLM port ",req.mode.name(),pkt_id),UVM_HIGH);
+	drive(req);
+        seq_item_port.item_done();
+        `uvm_info("get_pkt",$sformatf("Driver Transaction %0d Done ",pkt_id),UVM_MEDIUM);
+end
+endtask
+
+function void driver::build_phase(uvm_phase phase);
+    super.build_phase(phase);
+	  uvm_config_db#(virtual router_if.tb)::get(get_parent(),"","drvr_if",vif);
+          assert(vif != null) else 
+          `uvm_fatal("VIF_ERR","Virtual interface in driver is NULL ");
+endfunction
+
+task driver::drive(ref packet pkt);
+    case (pkt.mode)
+	RESET     : drive_reset(pkt);
+	REG_WRITE : drive_reg_write(pkt);
+	REG_READ  : drive_reg_read(pkt);
+	default   : drive_pkt(pkt);
+    endcase
+endtask
+
+task driver::drive_reset(input packet pkt);
+`uvm_info("Reset_PKT","Applying Reset to DUT",UVM_MEDIUM);
+    vif.rst=1'b1;
+    for(bit[7:0] i=0;i<4;i++)
+	vif.cb.inp_vld[i] <= 1'b0;
+    repeat(5) @(vif.cb);
+    vif.rst=1'b0;
+
+`uvm_info("Reset_PKT","DUT is out of Reset ",UVM_MEDIUM);
+endtask
+
+task driver::drive_reg_write(input packet pkt);
+`uvm_info("Reg_Write","Register Write Operation Started ",UVM_MEDIUM);
+    @(vif.cb);
+    vif.cb.reg_wr   <= 1'b1;
+    vif.cb.reg_addr <= pkt.reg_addr;
+    vif.cb.reg_din  <= pkt.reg_data;
+    @(vif.cb);
+    vif.cb.reg_wr   <= 1'b0;
+`uvm_info("Reg_Write","Register Write Operation Ended ",UVM_MEDIUM);
+endtask
+
+task driver::drive_reg_read(ref packet pkt);
+`uvm_info("Reg_Write","Register Read Operation Started ",UVM_MEDIUM);
+    @(vif.cb);
+    vif.cb.reg_rd   <= 1'b1;
+    vif.cb.reg_addr <= pkt.reg_addr;
+    @(vif.cb);
+    @(vif.cb);
+    pkt.reg_data= vif.cb.reg_dout;
+    vif.cb.reg_rd   <= 1'b0;
+`uvm_info("Reg_Write","Register Read Operation Ended ",UVM_MEDIUM);
+endtask
+
+task driver::drive_pkt(input packet pkt);
+bit [7:0] tot_pkt[$];
+bit [31:0] length;
+length=pkt.tot_pkt.size();
+tot_pkt=pkt.tot_pkt;
+	@(vif.cb);
+`uvm_info("DRV_PKT"," Drive operation started...",UVM_FULL);
+`uvm_info("DRV_PKT",pkt.convert2string(),UVM_MEDIUM);
+vif.cb.inp_vld[pkt.sa] <= 1'b1;
+vif.cb.data_in[pkt.sa] <= tot_pkt.pop_front();//driving value of sa
+@(vif.cb);
+vif.cb.data_in[pkt.sa] <= tot_pkt.pop_front();//driving value of da
+for (bit [31:0] i=2; i < length;i++) begin
+    @(vif.cb);
+   vif.cb.data_in[pkt.sa] <= tot_pkt.pop_front();
+end
+vif.cb.inp_vld[pkt.sa] <= 1'b0;
+repeat(5) @(vif.cb);
+`uvm_info("DRV_PKT"," Drive operation Ended ...",UVM_FULL);
+endtask

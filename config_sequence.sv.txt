@@ -1,0 +1,25 @@
+class config_sequence extends uvm_sequence#(packet);
+`uvm_object_utils(config_sequence)
+
+function new (string name="config_sequence");
+	super.new(name);
+	set_automatic_phase_objection(1);//uvm-1.2 only
+endfunction
+
+task body();
+      `uvm_create(req);
+      req.mode=REG_WRITE;
+      req.reg_addr=8'h20; //sa_port_csr
+      req.reg_data=8'b0000_1111;
+      start_item(req);
+      finish_item(req);
+
+      `uvm_create(req);
+      req.mode=REG_WRITE;
+      req.reg_addr=8'h22;//da_port_csr
+      req.reg_data=8'b0000_1111;
+      start_item(req);
+      finish_item(req);
+	`uvm_info("CFG_SEQ","Config Sequence : Transaction DONE",UVM_MEDIUM);
+endtask
+endclass

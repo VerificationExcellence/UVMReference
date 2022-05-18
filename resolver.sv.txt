@@ -1,0 +1,18 @@
+module resolver (
+input logic a,b,c,d,
+output logic u,v,w,x
+);
+
+always @*
+begin
+{u,v,w,x}='b0;
+	casex({a,b,c,d})
+	4'b1xxx:u=1'b1;
+	4'b01xx:v=1'b1;
+	4'b001x:w=1'b1;
+	4'b0001:x=1'b1;
+	default: {u,v,w,x}='b0;
+	endcase
+end
+
+endmodule

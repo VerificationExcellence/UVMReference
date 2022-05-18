@@ -1,0 +1,39 @@
+interface router_if (input clk);
+
+//Router inputs
+logic 		rst;
+logic [7:0]     data_in[4];//input data
+logic 		inp_vld[4]; //input valid
+
+//Router outputs
+logic [7:0]	data_out[4]; //output data
+logic 		outp_vld[4];
+
+logic  		i1wy[4];
+logic 		i2wy[4];
+logic 		i3wy[4];
+logic 		i4wy[4];
+
+//RAL register operations
+logic [7:0] reg_din;
+logic [7:0] reg_dout;
+logic [7:0] reg_addr;
+logic	reg_wr,reg_rd;
+
+clocking cb@(posedge clk);
+    output data_in;
+    output inp_vld;
+    output reg_din,reg_wr,reg_rd,reg_addr;
+    input i1wy,i2wy,i3wy,i4wy,reg_dout;
+endclocking
+
+clocking cb_mon@(posedge clk);
+	input data_out,outp_vld; 
+	input data_in,inp_vld; 
+	input reg_dout;
+endclocking
+
+modport tb(clocking cb,output rst);
+modport tb_mon(clocking cb_mon);
+
+endinterface

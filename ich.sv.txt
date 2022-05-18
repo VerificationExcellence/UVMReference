@@ -1,0 +1,133 @@
+module ich (
+	input logic 	clk,rst,inv,
+	input [7:0] 	in,
+	input  			sa_enable,
+	input [3:0]		da_port_csr,
+	input			busy1,busy2,busy3,busy4,
+	output 	logic	iwy1b,iwy2b,iwy3b,iwy4b,
+	input  			iwy1c,iwy2c,iwy3c,iwy4c,
+	output logic    disc1,disc2,disc3,disc4,
+	output logic [7:0] in_d2,
+	output logic inc_dropped_count
+	);
+logic iwy1a,iwy2a,iwy3a,iwy4a;
+logic [7:0] in_d1;
+logic inv_d;
+logic inv_pe;
+enum {IDLE,SA,DA,LEN3,LEN2,LEN1,LEN0,CRC3,CRC2,CRC1,CRC0,DATA} state,statei;
+logic [31:0] count;
+logic [7:0] da;
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) {in_d2,in_d1}<='b0; 
+	else{in_d2,in_d1}<={in_d1,in};
+end
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) inv_d<=0;
+	else     inv_d<=inv;
+end
+assign inv_pe = !inv_d && inv && sa_enable;
+
+always @(posedge clk or posedge rst)
+begin
+if (rst) 
+	begin
+		statei<=IDLE;
+		count <=0;
+		da<=0;
+		inc_dropped_count<=1'b0;
+	end
+else     
+	inc_dropped_count<=1'b0;
+	case(statei)
+	IDLE: statei<= inv_pe ? DA : IDLE;
+	DA: 
+		begin
+			if (iwy1c||iwy2c||iwy3c||iwy4c)
+			begin
+				statei <=LEN3;
+			end
+		else
+			begin
+				statei<=IDLE;
+				inc_dropped_count<=1;
+			end
+		da<=in;
+		end
+	LEN3: begin
+			statei<=LEN2;
+			count[31:24]<=in;
+		  end
+	LEN2: begin	
+			statei<=LEN1;
+			count[23:16]<=in;
+			end
+	LEN1: begin
+			statei<=LEN0;
+			count[15:8] <=in;
+			end
+	LEN0: begin
+			statei <=CRC3;
+			count[7:0]<=in;
+		  end
+	CRC3: statei<=CRC2;
+	CRC2: statei<=CRC1;
+	CRC1: statei<=CRC0;
+	CRC0: statei<=DATA;
+	DATA: begin
+			if (count>1) 
+					begin
+						statei<=DATA;
+						count<=count-1;
+					end
+			else	
+					begin
+						statei<=IDLE;
+						da<=0;
+						count<=0;
+					end
+			//statei<=(count>1) ? DATA :IDLE;
+			//count<=count-1;
+			end
+	endcase
+end
+
+always @*
+begin
+{iwy1a,iwy2a,iwy3a,iwy4a}='b0;
+	case(statei)
+	IDLE : state  = inv_pe ? SA : IDLE;
+	DA   : begin
+			state = statei;
+			case(in)
+				1:iwy1a=da_port_csr[0]?1:0;
+				2:iwy2a=da_port_csr[1]?1:0;
+				3:iwy3a=da_port_csr[2]?1:0;
+				4:iwy4a=da_port_csr[3]?1:0;
+			endcase
+			end
+	default: state=statei;
+	endcase
+end
+
+assign iwy1b = busy1 ? 1'b0 : iwy1a;
+assign iwy2b = busy2 ? 1'b0 : iwy2a;
+assign iwy3b = busy3 ? 1'b0 : iwy3a;
+assign iwy4b = busy4 ? 1'b0 : iwy4a;
+
+always @*
+begin
+{disc1,disc2,disc3,disc4}='b0;
+if (state==DATA && count==1)
+	case(da)
+	1: disc1=1;
+	2: disc2=1;
+	3: disc3=1;
+	4: disc4=1;
+	endcase
+end
+
+endmodule
