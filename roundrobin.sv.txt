@@ -1,0 +1,101 @@
+enum {R1Y,R2Y,R3Y,R4Y,RUR1,RUR2,RUR3,RUR4} state;
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst)
+		case(chaNo)
+		4'busy1000: state<=RUR4;
+		4'b0100: state<=RUR1;
+		4'b0010: state<=RUR2;
+		4'b0001: state<=RUR3;
+		default: state<=RUR4;
+		endcase
+	else
+
+case(state)
+RUR4:
+		case(1)
+		disc: state<=RUR4;
+		r1: state<=R1Y;
+		r2: state<=R2Y;
+		r3: state<=R3Y;
+		r4: state<=R4Y;
+		default: state<=state;
+		endcase
+R1Y:
+		case(1)
+		disc:
+			 case(1)
+			 r2: state<=R2Y;
+			 r3: state<=R3Y;
+			 r4: state<=R4Y;
+			 default: state<=RUR1;
+			 endcase
+		default: state<=state;
+		endcase
+R2Y:
+		case(1)
+		disc:
+			 case(1)
+			 r3: state<=R3Y;
+			 r4: state<=R4Y;
+			 r1: state<=R1Y;
+			 default: state<=RUR2;
+			 endcase
+		default: state<=state;
+		endcase
+R3Y:
+		case(1)
+		disc:
+			 case(1)
+			 r4: state<=R4Y;
+			 r1: state<=R1Y;
+			 r2: state<=R2Y;
+			 default: state<=RUR3;
+			 endcase
+		default: state<=state;
+		endcase
+	
+R4Y:
+		case(1)
+		disc:
+			 case(1)
+			 r1: state<=R1Y;
+			 r2: state<=R2Y;
+			 r3: state<=R3Y;
+			 default: state<=RUR4;
+			 endcase
+		default: state<=state;
+		endcase
+RUR1:
+		case(1)
+		disc: state<=RUR1;
+		r2: state<=R2Y;
+		r3: state<=R3Y;
+		r4: state<=R4Y;
+		r1: state<=R1Y;
+		default: state<=state;
+		endcase
+		
+RUR2:
+		case(1)
+		disc: state<=RUR2;		
+		r3: state<=R3Y;
+		r4: state<=R4Y;
+		r1: state<=R1Y;
+		r2: state<=R2Y;
+		default: state<=state;
+		endcase
+RUR3:
+		case(1)
+		disc: state<=RUR3;		
+		r4: state<=R4Y;
+		r1: state<=R1Y;
+		r2: state<=R2Y;
+		r3: state<=R3Y;
+		default: state<=state;
+		endcase
+
+	endcase
+
+end

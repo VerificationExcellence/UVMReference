@@ -1,0 +1,49 @@
+class test_sa1_da1 extends uvm_test;
+
+`uvm_component_utils(test_sa1_da1)
+
+virtual router_if vif;
+
+	environment env;
+
+	function new (string name="test_sa1_da1",uvm_component parent=null);
+		super.new(name,parent);
+	endfunction
+
+	extern virtual function void build_phase(uvm_phase phase);
+	extern virtual function void final_phase(uvm_phase phase);
+        extern virtual task main_phase (uvm_phase phase);
+
+endclass	
+
+function void test_sa1_da1::build_phase(uvm_phase phase);
+super.build_phase(phase);
+env=environment::type_id::create("env",this);
+uvm_config_db#(virtual router_if)::get(this,"","vif",vif);
+
+uvm_config_db#(virtual router_if.tb)::set(this,"env.m_agent","drvr_if",vif.tb);
+uvm_config_db#(virtual router_if.tb_mon)::set(this,"env.m_agent","iMon_if",vif.tb_mon);
+uvm_config_db#(virtual router_if.tb_mon)::set(this,"env.s_agent","oMon_if",vif.tb_mon);
+
+  uvm_config_db#(int)::set(this,"env.m_agent.seqr.*", "item_count", 100);
+
+uvm_config_db#(uvm_object_wrapper)::set(this,"env.m_agent.seqr.reset_phase","default_sequence",reset_sequence::get_type());
+uvm_config_db#(uvm_object_wrapper)::set(this,"env.m_agent.seqr.configure_phase","default_sequence",config_sequence::get_type());
+uvm_config_db#(uvm_object_wrapper)::set(this,"env.m_agent.seqr.main_phase","default_sequence",sa1da1_sequence::get_type());
+
+endfunction
+
+task test_sa1_da1::main_phase (uvm_phase phase);
+uvm_objection objection;
+super.main_phase(phase);
+objection=phase.get_objection();
+objection.set_drain_time(this,1000ns);
+//The drain time is the amount of time to wait once all objections have been dropped
+endtask
+
+
+function void test_sa1_da1::final_phase(uvm_phase phase);
+super.final_phase(phase);
+//uvm_top.print_topology();
+//factory.print();
+endfunction

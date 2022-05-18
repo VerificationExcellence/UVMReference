@@ -1,0 +1,43 @@
+class coverage extends uvm_subscriber#(packet);
+`uvm_component_utils(coverage)
+
+packet pkt;
+real coverage_score;
+
+   covergroup cov_mem with function sample(packet pkt) ;
+   coverpoint pkt.sa { // Source Port Coverage 
+     bins sa_0 = {0};
+     bins sa_1 = {1};
+     bins sa_2 = {2};
+     bins sa_3 = {3};
+   }
+   coverpoint pkt.da { // Destination POrt Measure coverage
+     bins da_0 = {0};
+     bins da_1 = {1};
+     bins da_2 = {2};
+     bins da_3 = {3};
+   }
+   cross pkt.sa,pkt.da;
+   endgroup
+
+function new (string name="coverage",uvm_component parent);
+super.new(name,parent);
+cov_mem=new;
+endfunction
+
+virtual function void write( T t);
+
+if (!$cast(pkt,t.clone)) begin
+    `uvm_fatal("COV","Transaction object supplied is NULL in coverage component");
+end
+
+cov_mem.sample(pkt);
+coverage_score=cov_mem.get_coverage();
+`uvm_info("COV",$sformatf("Coverage=%0f ",coverage_score),UVM_NONE);
+endfunction
+
+virtual function void extract_phase(uvm_phase phase);
+uvm_config_db#(real)::set(null,"uvm_test_top.env","cov_score",coverage_score);
+endfunction
+
+endclass

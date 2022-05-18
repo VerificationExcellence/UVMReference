@@ -1,0 +1,65 @@
+class iMonitor extends uvm_monitor;
+`uvm_component_utils(iMonitor)
+
+virtual router_if.tb_mon vif;
+
+// This TLM port is used to connect the monitor to the scoreboard
+uvm_analysis_port #(packet) analysis_port;
+
+// Current monitored transaction
+packet pkt;
+
+function new (string name="iMonitor",uvm_component parent);
+	super.new(name,parent);
+endfunction
+
+extern virtual task run_phase(uvm_phase phase);
+extern virtual function void build_phase(uvm_phase phase);
+extern task collect_pkt(input bit [3:0] port);
+endclass 
+
+function void iMonitor::build_phase(uvm_phase phase) ;
+	super.build_phase(phase);
+	if (!uvm_config_db#(virtual router_if.tb_mon)::get(get_parent(), "", "iMon_if", vif)) begin
+          `uvm_fatal("VIF_ERR","iMonitor DUT interface not set");
+         end
+//create TLM port
+    analysis_port=new("analysis_port",this);
+endfunction
+
+task iMonitor::run_phase(uvm_phase phase);
+    // The job of the iMonitor is to passively monitor the physical signals,
+    // interprete and report the activities that it sees.  In this case, to
+    // re-construct the packet that it sees on the DUT's input port as specified
+fork 
+  collect_pkt(0);
+  collect_pkt(1);
+  collect_pkt(2);
+  collect_pkt(3);
+join
+endtask 
+
+task iMonitor::collect_pkt(input bit [3:0] port);
+packet pkt1;
+bit [15:0] len1;
+    forever begin
+        @(vif.cb_mon.inp_vld[port]);
+        `uvm_info("iMon_PKT",$sformatf("Value change=%0d observed port %0d",vif.cb_mon.inp_vld[port],port),UVM_FULL);
+	 if (vif.cb_mon.inp_vld[port] === 1'bx || vif.cb_mon.inp_vld[port] === 1'bz || vif.cb_mon.inp_vld[port] === 1'b0) continue;
+        `uvm_info("iMon_PKT",$sformatf("Started collecting pakcet on port %0d",port),UVM_MEDIUM);
+	 pkt1 = packet::type_id::create("pkt1",this);
+	  	while(1) begin//collect packet
+	  	  pkt1.tot_pkt.push_back(vif.cb_mon.data_in[port]);
+		  if(pkt1.tot_pkt.size() == 6) len1= {pkt1.tot_pkt[2],pkt1.tot_pkt[3],pkt1.tot_pkt[4],pkt1.tot_pkt[5]};
+		  if(pkt1.tot_pkt.size() == (1+1+4+4+len1)) break;
+	   	  @(vif.cb_mon);
+        	end
+	pkt1.sa=pkt1.tot_pkt[0];	
+	pkt1.da=pkt1.tot_pkt[1];	
+        `uvm_info("iMon_PKT",pkt1.convert2string(),UVM_MEDIUM);
+	analysis_port.write(pkt1);
+        `uvm_info("iMon_PKT",$sformatf("Packet Sent to Scorboard from Port %0d",port),UVM_MEDIUM);
+     end
+
+endtask
+

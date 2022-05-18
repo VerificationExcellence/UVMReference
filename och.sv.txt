@@ -1,0 +1,30 @@
+module OCH (
+input 	logic 			clk,
+input 	logic			rst,
+input 	logic			r1,r2,r3,r4,
+input 	logic 	[7:0] 	in1,in2,in3,in4,
+output 	logic 	[7:0] 	out,
+output logic            outv,
+input 	logic 			disc,
+input 	logic  	[1:4]   chaNo,
+output logic		    busy
+);
+
+`include "priority.sv"
+
+always @*
+begin
+	case(state)
+	R1Y: out=in1;
+	R2Y: out=in2;
+	R3Y: out=in3;
+	R4Y: out=in4;
+	default: out = 'bz;
+	endcase
+end
+
+assign outv = (state==R1Y|| state==R2Y||state==R3Y||state==R4Y);
+
+assign busy = !(state==NC);
+
+endmodule

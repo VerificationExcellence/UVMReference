@@ -1,0 +1,111 @@
+// SA       = 1 byte
+// DA       = 1 byte
+// Length   = 4 bytes
+// CRC      = 4 bytes
+// Payload  = 100 Bytes
+
+class packet extends uvm_sequence_item;
+
+//Router inputs
+rand bit [7:0] sa,da;
+rand bit [31:0] len;
+bit [31:0] crc;
+rand bit [7:0] payload[]; 
+bit [7:0] tot_pkt[$];
+op_type mode;
+
+bit [7:0] reg_addr;
+bit [7:0] reg_data;
+
+constraint valid {
+  sa inside {[0:3]}; //valid sa ports
+  da inside {[0:3]}; //valid da ports
+  len > 10 ; //Min size
+  len < 100; //Max size
+
+  payload.size == len;
+  foreach(payload[index]) 
+   if (index > 0 )payload[index] != payload[index-1];
+}
+
+function void post_randomize();
+    crc=calc_crc(payload);
+    $display("[crc] post_rand crc=%0h",crc);
+endfunction
+
+`uvm_object_utils_begin(packet)
+`uvm_field_int(sa,UVM_ALL_ON | UVM_NOCOMPARE)
+`uvm_field_int(da,UVM_ALL_ON | UVM_NOCOMPARE)
+`uvm_field_int(crc,UVM_ALL_ON | UVM_NOCOMPARE)
+`uvm_field_int(len,UVM_ALL_ON | UVM_NOCOMPARE)
+`uvm_field_array_int(payload,UVM_ALL_ON | UVM_NOCOMPARE)
+`uvm_field_queue_int(tot_pkt,UVM_ALL_ON | UVM_NOCOMPARE )
+`uvm_object_utils_end
+
+virtual function string convert2string();
+return $sformatf("Pkt_Size=%0d sa=%0d da=%0d ",tot_pkt.size(),sa,da);
+endfunction
+
+
+function new(string name="packet");
+	super.new(name);
+endfunction
+extern virtual function bit [31:0] calc_crc (ref bit [7:0] pkt[]);
+extern function void pack(); 
+extern virtual function bit do_compare (uvm_object rhs , uvm_comparer comparer);
+
+endclass
+
+function bit packet::do_compare (uvm_object rhs , uvm_comparer comparer);
+packet pkt;
+bit status;
+if (!$cast(pkt,rhs)) begin `uvm_fatal("CAST","do_compare casting failed \n"); end
+
+if(this.tot_pkt.size() == pkt.tot_pkt.size()) begin
+  foreach(pkt.tot_pkt[index]) begin
+      if(this.tot_pkt[index] == pkt.tot_pkt[index])
+          	status = 1;
+      else  
+	    return 0;
+   end//end_of_foreach
+ end//end_of_main_if
+ else return 0;
+return status;
+endfunction
+
+function void packet::pack();
+tot_pkt.push_back(sa);
+tot_pkt.push_back(da+1);
+tot_pkt.push_back(len[31:24]);
+tot_pkt.push_back(len[23:16]);
+tot_pkt.push_back(len[15:8]);
+tot_pkt.push_back(len[7:0]);
+tot_pkt.push_back(crc[31:24]);
+tot_pkt.push_back(crc[23:16]);
+tot_pkt.push_back(crc[15:8]);
+tot_pkt.push_back(crc[7:0]);
+for (int i=0;i<len;i++) tot_pkt.push_back(payload[i]);
+//`uvm_info("PACK",$sformatf("Packet size=%0d sa=%0d da=%0d",tot_pkt.size(),tot_pkt[0],tot_pkt[1]),UVM_LOW);
+payload.delete();
+endfunction
+
+function bit [31:0] packet::calc_crc (ref bit [7:0] pkt[]);
+bit [7:0] temp;
+bit [31:0] new_crc;
+new_crc = 32'hFFFF_FFFF;
+for(int i=0;i<pkt.size();i++) begin//1
+	temp = pkt[i];
+	for(int j=0; j<8;j++) begin//2
+		if((temp & 8'h01) ^ (new_crc >> 31)) begin//3
+			new_crc = (new_crc << 1) ^ 32'h04c11db7;
+		end	//3
+		else 
+		begin 	//4
+			new_crc = new_crc << 1;
+		end		//4
+	temp = temp >> 1;
+        end //2
+  end//1
+return new_crc;
+endfunction
+

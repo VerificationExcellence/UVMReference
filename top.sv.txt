@@ -1,0 +1,52 @@
+module top;
+
+bit clk; 
+always #5 clk++;
+
+router_if rif (clk);
+program_router tb_inst  (rif);
+
+duttop duttop_inst (
+.clk(clk) ,
+.rst(rif.rst),
+.in1(rif.data_in[0]),
+.in2(rif.data_in[1]),
+.in3(rif.data_in[2]),
+.in4(rif.data_in[3]),
+.in1v(rif.inp_vld[0]),
+.in2v(rif.inp_vld[1]),
+.in3v(rif.inp_vld[2]),
+.in4v(rif.inp_vld[3]),
+.out1(rif.data_out[0]),
+.out2(rif.data_out[1]),
+.out3(rif.data_out[2]),
+.out4(rif.data_out[3]),
+.out1v(rif.outp_vld[0]),
+.out2v(rif.outp_vld[1]),
+.out3v(rif.outp_vld[2]),
+.out4v(rif.outp_vld[3]),
+.din(rif.reg_din),
+.dout(rif.reg_dout),
+.addr(rif.reg_addr),
+.wr(rif.reg_wr),
+.rd(rif.reg_rd),
+.i1wy1(rif.i1wy[0]),
+.i1wy2(rif.i1wy[1]),
+.i1wy3(rif.i1wy[2]),
+.i1wy4(rif.i1wy[3]),
+.i2wy1(rif.i2wy[0]),
+.i2wy2(rif.i2wy[1]),
+.i2wy3(rif.i2wy[2]),
+.i2wy4(rif.i2wy[3]),
+.i3wy1(rif.i3wy[0]),
+.i3wy2(rif.i3wy[1]),
+.i3wy3(rif.i3wy[2]),
+.i3wy4(rif.i3wy[3]),
+.i4wy1(rif.i4wy[0]),
+.i4wy2(rif.i4wy[1]),
+.i4wy3(rif.i4wy[2]),
+.i4wy4(rif.i4wy[3])
+);
+
+
+endmodule

@@ -1,0 +1,143 @@
+module ichtop (
+input logic clk,
+input logic rst,
+input logic busy1,busy2,busy3,busy4,
+input logic [7:0] in1,in2,in3,in4,
+input logic in1v,in2v,in3v,in4v,
+input logic [7:0] sa_port_csr,
+input logic [7:0] da_port_csr,
+output logic discy1_d2,discy2_d2,discy3_d2,discy4_d2,
+output logic 	i1wy1,i1wy2,i1wy3,i1wy4,
+				i2wy1,i2wy2,i2wy3,i2wy4,
+				i3wy1,i3wy2,i3wy3,i3wy4,
+				i4wy1,i4wy2,i4wy3,i4wy4,
+output logic [7:0] in1_del2,in2_del2,in3_del2,in4_del2,
+output logic drop
+);
+logic discy1_d1,discy2_d1,discy3_d1,discy4_d1;
+logic drop1,drop2,drop3,drop4;
+ich ICH1 (.*,
+		 .inv(in1v),
+		 .in(in1),
+		 .sa_enable(sa_port_csr[0]),
+		 .da_port_csr(da_port_csr[3:0]),
+		 .iwy1b(i1wy1b),
+		 .iwy2b(i1wy2b),
+		 .iwy3b(i1wy3b),
+		 .iwy4b(i1wy4b),
+		 .iwy1c(i1wy1),
+		 .iwy2c(i1wy2),
+		 .iwy3c(i1wy3),
+		 .iwy4c(i1wy4),
+		 .disc1(disc11),
+		 .disc2(disc12),
+		 .disc3(disc13),
+		 .disc4(disc14),
+		 .in_d2(in1_del2),
+		 .inc_dropped_count(drop1)
+);
+ich ICH2 (.*,
+		 .inv(in2v),
+		 .in(in2),
+		 .sa_enable(sa_port_csr[1]),
+		 .da_port_csr(da_port_csr[3:0]),
+		 .iwy1b(i2wy1b),
+		 .iwy2b(i2wy2b),
+		 .iwy3b(i2wy3b),
+		 .iwy4b(i2wy4b),
+		 .iwy1c(i2wy1),
+		 .iwy2c(i2wy2),
+		 .iwy3c(i2wy3),
+		 .iwy4c(i2wy4),
+		 .disc1(disc21),
+		 .disc2(disc22),
+		 .disc3(disc23),
+		 .disc4(disc24),
+		 .in_d2(in2_del2),
+		 .inc_dropped_count(drop2)
+);
+ich ICH3 (.*,
+		 .inv(in3v),
+		 .in(in3),
+		 .sa_enable(sa_port_csr[2]),
+		 .da_port_csr(da_port_csr[3:0]),
+		 .iwy1b(i3wy1b),
+		 .iwy2b(i3wy2b),
+		 .iwy3b(i3wy3b),
+		 .iwy4b(i3wy4b),
+		 .iwy1c(i3wy1),
+		 .iwy2c(i3wy2),
+		 .iwy3c(i3wy3),
+		 .iwy4c(i3wy4),
+		 .disc1(disc31),
+		 .disc2(disc32),
+		 .disc3(disc33),
+		 .disc4(disc34),
+		 .in_d2(in3_del2),
+		 .inc_dropped_count(drop3)
+);
+ich ICH4 (.*,
+		 .inv(in4v),
+		 .in(in4),
+		 .sa_enable(sa_port_csr[3]),
+		 .da_port_csr(da_port_csr[3:0]),
+		 .iwy1b(i4wy1b),
+		 .iwy2b(i4wy2b),
+		 .iwy3b(i4wy3b),
+		 .iwy4b(i4wy4b),
+		 .iwy1c(i4wy1),
+		 .iwy2c(i4wy2),
+		 .iwy3c(i4wy3),
+		 .iwy4c(i4wy4),
+		 .disc1(disc41),
+		 .disc2(disc42),
+		 .disc3(disc43),
+		 .disc4(disc44),
+		 .in_d2(in4_del2),
+		 .inc_dropped_count(drop4)
+);
+assign drop = drop1 || drop2 || drop3 || drop4;
+assign discy1 = disc11 || disc21 || disc31 || disc41;
+assign discy2 = disc12 || disc22 || disc32 || disc42;
+assign discy3 = disc13 || disc23 || disc33 || disc43;
+assign discy4 = disc14 || disc24 || disc34 || disc44;		
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) {discy1_d2,discy1_d1} <=2'b00;
+	else {discy1_d2,discy1_d1} <= {discy1_d1,discy1};
+end
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) {discy2_d2,discy2_d1} <=2'b00;
+	else {discy2_d2,discy2_d1} <= {discy2_d1,discy2};
+end
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) {discy3_d2,discy3_d1} <=2'b00;
+	else {discy3_d2,discy3_d1} <= {discy3_d1,discy3};
+end
+
+always @(posedge clk or posedge rst)
+begin
+	if (rst) {discy4_d2,discy4_d1} <=2'b00;
+	else {discy4_d2,discy4_d1} <= {discy4_d1,discy4};
+end
+
+
+resolver R1 (i1wy1b,i2wy1b,i3wy1b,i4wy1b,
+           i1wy1,i2wy1,i3wy1,i4wy1
+		   );
+resolver R2(i2wy2b,i3wy2b,i4wy2b,i1wy2b,
+           i2wy2,i3wy2,i4wy2,i1wy2
+		   );
+resolver R3 (i3wy3b,i4wy3b,i1wy3b,i2wy3b,
+           i3wy3,i4wy3,i1wy3,i2wy3
+		   );
+resolver R4 (i4wy4b,i1wy4b,i2wy4b,i3wy4b,
+            i4wy4,i1wy4,i2wy4,i3wy4
+		   );
+		   		   		   		    
+endmodule

@@ -1,0 +1,129 @@
+enum {NC,R1Y,R2Y,R3Y,R4Y} state;
+	always @(posedge clk or posedge rst)
+	begin
+		if (rst) state<=NC;
+		else
+		case(state)
+		NC:
+			case(1)
+			r1: state<=R1Y;
+			r2: state<=R2Y;
+			r3: state<=R3Y;
+			r4: state<=R4Y;
+			default :state<=NC;
+			endcase
+		R1Y:
+			case(1)
+			disc:
+				case(1)
+				r2 : state<=R2Y;
+				r3 : state<=R3Y;
+				r4 : state<=R4Y;
+				default: state<=NC;
+				endcase
+			default: state<=state;
+			endcase
+		R2Y:
+			case(1)
+			disc:
+				case(1)
+				r1 : state<=R1Y;
+				r3 : state<=R3Y;
+				r4 : state<=R4Y;
+				default: state<=NC;
+				endcase
+			default: state<=state;
+			endcase			
+		R3Y:
+			case(1)
+			disc:
+				case(1)
+				r1 : state<=R1Y;
+				r2 : state<=R2Y;
+				r4 : state<=R4Y;
+				default: state<=NC;
+				endcase
+			default: state<=state;
+			endcase
+		R4Y:
+			case(1)
+			disc:
+				case(1)
+				r1 : state<=R1Y;
+				r2 : state<=R2Y;
+				r3 : state<=R4Y;
+				default: state<=NC;
+				endcase
+			default: state<=state;
+			endcase
+		endcase
+	end
+logic startpulse;
+always @(*)
+begin
+	startpulse=0;
+	case(state)
+	NC:	if (r1||r2||r3||r4)  startpulse=1;
+	endcase
+end
+bit [7:0] Q[$];
+int crc;
+always @(posedge clk or posedge rst)
+begin
+if (rst) Q.delete();
+else
+	begin
+	case(1)
+	startpulse: 
+				begin
+					//$display ("reached here at %t",$time);
+					repeat (6) @(posedge clk);
+					while (!disc) 
+							begin
+								    @(posedge clk);
+								    //$display ("out is :%d",out);
+									Q.push_back(out);
+							end
+					//$display ("[RTL] Contents of packet Q received ",Q);
+					repeat(4)
+						begin
+							Q.push_back(Q[0]);
+							Q.delete(0);
+						end
+					//$display ("[RTL] Contents of Q received ",Q);
+					
+					calc_crc(Q,crc);
+					Q.delete();
+					//$display ("[RTL] CRC received is %h",crc);
+				end
+	endcase
+	end
+end
+
+
+function automatic void 
+calc_crc
+(
+	ref bit [7:0] pkt[$],//Queue of bit[7:0]
+	output int crc
+);
+  bit [7:0] temp;
+   crc = 32'hFFFF_FFFF;
+for(int i=0;i<pkt.size();i++) 
+	begin//(1
+		//$display (i);
+		temp = pkt[i];
+		for(int j=0; j<8;j++) 
+			begin//(2
+				if((temp & 8'h01) ^ (crc >> 31)) 
+					begin//(3
+						crc = (crc << 1) ^ 32'h04c11db7;
+					end	//3)
+				else 
+					begin 	//(4
+						crc = crc << 1;
+					end		//4)
+			temp = temp >> 1;
+			end //2)
+  end//1)
+endfunction
